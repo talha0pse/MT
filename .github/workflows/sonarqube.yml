@@ -1,4 +1,4 @@
-name: SonarQube Scan
+name: SonarCloud Scan
 
 on:
   pull_request:
@@ -6,14 +6,12 @@ on:
 
 jobs:
   sonarqube:
-    name: SonarCloud Scan
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # required for PR analysis
+          fetch-depth: 0  # required for accurate PR analysis
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -21,7 +19,9 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: |
+          cd backend && npm ci
+          cd ../frontend && npm ci
 
       - name: Run SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
