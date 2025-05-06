@@ -1,65 +1,79 @@
-name: Deploy to EKS
+name: CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  EKS_ENABLED: ${{ secrets.EKS_ENABLED }}
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3  # ✅ latest v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3  # ✅ latest v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v3  # ✅ v3 to avoid warnings
-        with:
-          path: ~/.cache/docker
-          key: ${{ runner.os }}-docker-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-docker-
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3  # ✅ latest v3
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Backend Docker image
-        run: |
-          docker build -t talha0pse/mt-backend:${{ github.sha }} ./backend
-          docker push talha0pse/mt-backend:${{ github.sha }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build and push Frontend Docker image
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./MT/backend
+          push: true
+          tags: talha0pse/mt-backend:latest
+          cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
+          cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./MT/frontend
+          push: true
+          tags: talha0pse/mt-frontend:latest
+          cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
+          cache-to: type=local,dest=${{ runner.temp }}/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        if: ${{ always() }}
         run: |
-          docker build -t talha0pse/mt-frontend:${{ github.sha }} ./frontend
-          docker push talha0pse/mt-frontend:${{ github.sha }}
+          rm -rf $RUNNER_TEMP/.buildx-cache
+          mv $RUNNER_TEMP/.buildx-cache-new $RUNNER_TEMP/.buildx-cache || true
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: ${{ vars.EKS_ENABLED == 'true' }}  # ✅ fixed: using 'vars.' for repo variables
-
+    if: ${{ env.EKS_ENABLED == 'true' }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v3  # ✅ latest v3
+        uses: azure/setup-kubectl@v4
 
-      - name: Set kubeconfig
+      - name: Configure kubeconfig
         run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yml
-          export KUBECONFIG=kubeconfig.yml
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
 
-      - name: Update EKS deployment with new images
+      - name: Deploy to EKS
         run: |
-          kubectl set image deployment/backend-deployment backend=talha0pse/mt-backend:${{ github.sha }}
-          kubectl set image deployment/frontend-deployment frontend=talha0pse/mt-frontend:${{ github.sha }}
-          kubectl rollout status deployment/backend-deployment
-          kubectl rollout status deployment/frontend-deployment
+          kubectl apply -f ./MT/k8s/backend-deployment.yaml
+          kubectl apply -f ./MT/k8s/frontend-deployment.yaml
