@@ -6,18 +6,18 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4  # ✅ latest
+        uses: actions/checkout@v3  # ✅ latest v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3  # ✅ latest
+        uses: docker/setup-buildx-action@v3  # ✅ latest v3
 
       - name: Cache Docker layers
-        uses: actions/cache@v4  # ✅ fixed version (v2/v3 deprecated)
+        uses: actions/cache@v3  # ✅ v3 to avoid warnings
         with:
           path: ~/.cache/docker
           key: ${{ runner.os }}-docker-${{ github.sha }}
@@ -25,25 +25,39 @@ jobs:
             ${{ runner.os }}-docker-
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3  # ✅ latest stable
+        uses: docker/login-action@v3  # ✅ latest v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Backend Docker image
         run: |
-          docker build -t talha0pse/mt-backend:${{ github.sha }} .
+          docker build -t talha0pse/mt-backend:${{ github.sha }} ./backend
           docker push talha0pse/mt-backend:${{ github.sha }}
 
+      - name: Build and push Frontend Docker image
+        run: |
+          docker build -t talha0pse/mt-frontend:${{ github.sha }} ./frontend
+          docker push talha0pse/mt-frontend:${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ vars.EKS_ENABLED == 'true' }}  # ✅ fixed: using 'vars.' for repo variables
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v3  # ✅ latest
+        uses: azure/setup-kubectl@v3  # ✅ latest v3
 
       - name: Set kubeconfig
         run: |
           echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yml
           export KUBECONFIG=kubeconfig.yml
 
-      - name: Update EKS deployment with new image
+      - name: Update EKS deployment with new images
         run: |
           kubectl set image deployment/backend-deployment backend=talha0pse/mt-backend:${{ github.sha }}
           kubectl set image deployment/frontend-deployment frontend=talha0pse/mt-frontend:${{ github.sha }}
