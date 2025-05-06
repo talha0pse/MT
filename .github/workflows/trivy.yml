@@ -1,0 +1,26 @@
+name: Security Scan
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  trivy-scan:
+    name: Trivy Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
+        uses: aquasecurity/trivy-action@v0.13.1
+        with:
+          scan-type: "fs"
+          severity: "CRITICAL,HIGH"
+          output: "trivy-results.txt"
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-report
+          path: trivy-results.txt
