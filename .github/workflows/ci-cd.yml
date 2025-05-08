@@ -36,7 +36,7 @@ jobs:
       - name: Build and push backend image
         uses: docker/build-push-action@v4
         with:
-          context: ./MT/backend
+          context: ./backend
           push: true
           tags: talha0pse/mt-backend:latest
           cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
@@ -45,7 +45,7 @@ jobs:
       - name: Build and push frontend image
         uses: docker/build-push-action@v4
         with:
-          context: ./MT/frontend
+          context: ./frontend
           push: true
           tags: talha0pse/mt-frontend:latest
           cache-from: type=local,src=${{ runner.temp }}/.buildx-cache
