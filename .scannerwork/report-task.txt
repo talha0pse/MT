@@ -1,0 +1,7 @@
+organization=mt-org
+projectKey=mt-org
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.63113
+dashboardUrl=https://sonarcloud.io/dashboard?id=mt-org
+ceTaskId=AZawXjGrHacwwGH3zHPM
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZawXjGrHacwwGH3zHPM
