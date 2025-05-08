@@ -1,40 +1,39 @@
-name: SonarCloud Scan
+name: SonarCloud
 
 on:
   push:
     branches:
       - main
-      - develop
   pull_request:
     branches:
       - main
-      - develop
 
 jobs:
   sonarqube:
-    name: SonarCloud Analysis
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install backend dependencies
+      - name: Install dependencies
         working-directory: ./backend
         run: npm install
 
-      - name: Install frontend dependencies
-        working-directory: ./frontend
-        run: npm install
-
       - name: Run SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          projectBaseDir: ./backend
+        working-directory: ./backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.organization=mt-org \
+            -Dsonar.projectKey=mt-org \
+            -Dsonar.branch.name=main \
+            -Dsonar.sources=. \
+            -Dsonar.exclusions=node_modules/**,dist/**,**/*.spec.js
