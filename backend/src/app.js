@@ -1,24 +1,43 @@
-const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const authRoutes = require('./routes/authRoutes');
-const tradeRoutes = require('./routes/tradeRoutes');
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import connectDB from './config/db.js';
+import * as Sentry from '@sentry/node';
+import statusMonitor from 'express-status-monitor';
+import indexRoutes from './routes/index.js';
 
 dotenv.config();
+
+// Create Express app first
 const app = express();
 
+// Initialize Sentry BEFORE other middleware
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    Sentry.expressIntegration(app), // This handles request/error tracking
+  ],
+  tracesSampleRate: 1.0,
+});
+
+// Connect to MongoDB
+connectDB();
+
+// Middleware (NO explicit Sentry.Handlers needed)
+app.use(statusMonitor());
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-app.use('/api/trades', tradeRoutes);
+// Routes
+app.use('/api', indexRoutes);
 
-app.get('/', (req, res) => {
-  res.send('Backend is working!');
+// Error handling
+app.use((err, req, res, next) => {
+  Sentry.captureException(err);
+  res.status(err.statusCode || 500).json({
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+  });
 });
 
-app.get('/health', (req, res) => {
-  res.status(200).send('Healthy');
-});
-
-module.exports = app;
+export default app;

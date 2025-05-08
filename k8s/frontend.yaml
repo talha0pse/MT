@@ -1,34 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mt-frontend
-  namespace: mt-project
+  name: frontend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: mt-frontend
+      app: frontend
   template:
     metadata:
       labels:
-        app: mt-frontend
+        app: frontend
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        automountServiceAccountToken: false
       containers:
-      - name: mt-frontend
-        image: talha0pse/mt-frontend:latest
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mt-frontend-service
-  namespace: mt-project
-spec:
-  type: LoadBalancer
-  selector:
-    app: mt-frontend
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
+      - name: frontend
+        image: copytrading/frontend:1.0.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
