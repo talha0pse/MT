@@ -33,9 +33,8 @@ jobs:
         run: npm install
 
       - name: Run SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@master
         with:
-          projectBaseDir: ./backend  # because your sonar-project.properties is inside backend
+          projectBaseDir: ./backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
