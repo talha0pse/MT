@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for SonarCloud branch analysis
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -22,14 +24,20 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
+        working-directory: ./backend  # 🚨 Critical fix for ENOENT
         run: npm install
 
       - name: Run tests
+        working-directory: ./backend  # 🚨 Run tests in backend directory
         run: npm test -- --watchAll=false
 
       - name: Run SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
-        with:
-          projectBaseDir: ./backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          projectBaseDir: ./backend
+          args: >
+            -Dsonar.organization=mt-org
+            -Dsonar.projectKey=mt-org
+            -Dsonar.branch.name=develop  # Explicitly enforce branch name
