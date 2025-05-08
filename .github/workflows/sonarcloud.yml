@@ -25,7 +25,8 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
+      - name: Install Frontend dependencies
+        working-directory: ./frontend
         run: npm install
 
       - name: Run SonarCloud Scan
@@ -34,6 +35,7 @@ jobs:
           args: >
             -Dsonar.organization=mt-org
             -Dsonar.projectKey=mt-org
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.sources=frontend/src
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.spec.js
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
