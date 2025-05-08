@@ -1,13 +1,16 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL, // e.g. http://localhost:5000 or your Render URL
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
 });
 
-api.interceptors.request.use(cfg => {
+// Add token automatically
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) cfg.headers.Authorization = `Bearer ${token}`;
-  return cfg;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export default api;
