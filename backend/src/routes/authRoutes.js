@@ -1,10 +1,9 @@
-// backend/src/routes/authRoutes.js
-const express = require('express');
-const { registerUser, loginUser } = require('../controllers/authController');
+import express from 'express';
+import { register, login } from '../controllers/authController.js';
+
 const router = express.Router();
 
-router.post('/register', registerUser);
-router.post('/login',    loginUser);
-router.get('/test',      (req, res) => res.send('Auth OK'));
+router.post('/register', register);
+router.post('/login', login);
 
-module.exports = router;
+export default router;
