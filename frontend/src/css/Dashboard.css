@@ -1,0 +1,22 @@
+.dashboard-container {
+    height: 100vh;
+    background-size: cover;
+    padding: 20px;
+    color: white;
+  }
+  
+  .trade-form input,
+  .trade-form select {
+    margin: 5px;
+    padding: 8px;
+  }
+  
+  .trade-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .trade-list li {
+    margin: 10px 0;
+  }
+  
