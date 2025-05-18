@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --no-warnings src/server.js",
-    "start": "node server.js",
+    "start": "node src/server.js",
     "lint": "echo 'No linting configured' && exit 0"
   },
   "dependencies": {
