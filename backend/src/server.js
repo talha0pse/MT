@@ -1,10 +1,11 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors'; // ✅ Add this line
 import connectDB from './config/db.js';
 import tradeRoutes from './routes/tradeRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
-import { apiLimiter } from './middleware/rateLimiter.js'; // ✅ import
+import { apiLimiter } from './middleware/rateLimiter.js';
 
 dotenv.config();
 
@@ -14,7 +15,13 @@ const app = express();
 
 app.use(express.json());
 
-app.use(apiLimiter); // ✅ global rate limiter
+// ✅ Allow requests from frontend
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
+
+app.use(apiLimiter);
 
 app.use('/api/trades', tradeRoutes);
 app.use('/api/users', userRoutes);

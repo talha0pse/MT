@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import axios from '../api';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import authService from "../services/authService";
 
-function LoginPage() {
+const LoginPage = () => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,17 +16,11 @@ function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
     try {
-      const res = await axios.post('/auth/login', formData);
-      localStorage.setItem('token', res.data.token);
-      navigate('/dashboard');
+      await authService.login(formData);
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || "Login failed");
     }
   };
 
@@ -36,7 +32,7 @@ function LoginPage() {
         <input
           type="email"
           name="email"
-          placeholder="Email"
+          placeholder="Email Address"
           value={formData.email}
           onChange={handleChange}
           required
@@ -44,17 +40,18 @@ function LoginPage() {
         <input
           type="password"
           name="password"
-          placeholder="Password"
+          placeholder="Enter Password"
           value={formData.password}
           onChange={handleChange}
           required
         />
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
+        <button type="submit">Login</button>
       </form>
+      <p>
+         Need an account? <a href="/register">Register here</a>
+      </p>
     </div>
   );
-}
+};
 
 export default LoginPage;
