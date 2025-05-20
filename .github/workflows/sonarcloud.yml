@@ -1,36 +1,33 @@
-name: SonarCloud
+name: SonarCloud Scan
 
 on:
-  push:
-    branches: [main, develop]
   pull_request:
-    types: [opened, synchronize, reopened]
-    branches: [main, develop]
+    branches:
+      - main
 
 jobs:
-  sonarqube:
-    name: SonarCloud Scan with Coverage
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm install
+      - name: Install dependencies and run tests
+        run: |
+          cd frontend
+          npm install
+          npm test -- --coverage --watchAll=false
 
-      - name: Run tests and collect coverage
-        working-directory: ./frontend
-        run: npm test -- --coverage
-
-      - name: Upload coverage to SonarCloud
+      - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.organization=mt-org
@@ -40,5 +37,3 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
             -Dsonar.coverage.exclusions=**/*.test.js,**/__tests__/**,**/__mocks__/**
             -Dsonar.qualitygate.wait=true
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
