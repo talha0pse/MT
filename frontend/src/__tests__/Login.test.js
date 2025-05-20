@@ -1,8 +1,17 @@
-import { render, screen } from '@testing-library/react';
-import Login from '../pages/Login';
+// src/__tests__/Login.test.js
 
-test('renders Login heading', () => {
-  render(<Login />);
-  const heading = screen.getByText(/login/i);
-  expect(heading).toBeInTheDocument();
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import LoginPage from '../pages/LoginPage';
+
+test('renders login form', () => {
+  render(
+    <MemoryRouter>
+      <LoginPage />
+    </MemoryRouter>
+  );
+
+  // Example assertion
+  expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
 });
