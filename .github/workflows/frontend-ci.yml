@@ -1,0 +1,37 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - 'frontend/**'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'frontend/**'
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Dummy Lint (CRA has no default lint script)
+        run: echo "Skipping lint - no script defined"
+
+      - name: Run Tests
+        run: npm test -- --watchAll=false
+        working-directory: frontend

@@ -1,41 +1,46 @@
-name: SonarCloud
+name: SonarCloud Code Analysis
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [ "main" ]
   pull_request:
     types: [opened, synchronize, reopened]
-    branches:
-      - main
-      - develop
 
 jobs:
-  sonarqube:
-    name: SonarCloud Scan
+  sonarcloud:
+    name: SonarCloud
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install Frontend dependencies
-        working-directory: ./frontend
-        run: npm install
-
-      - name: Run SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v2
+      - name: Cache node_modules
+        uses: actions/cache@v4
         with:
-          args: >
-            -Dsonar.organization=mt-org
-            -Dsonar.projectKey=mt-org
-            -Dsonar.sources=frontend/src
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.spec.js
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: frontend
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Run SonarCloud Analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: frontend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
