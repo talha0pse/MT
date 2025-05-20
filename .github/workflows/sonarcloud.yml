@@ -2,14 +2,10 @@ name: SonarCloud
 
 on:
   push:
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
   pull_request:
     types: [opened, synchronize, reopened]
-    branches:
-      - main
-      - develop
+    branches: [main, develop]
 
 jobs:
   sonarqube:
@@ -29,13 +25,17 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
+      - name: Install Backend dependencies
+        working-directory: ./backend
+        run: npm install
+
       - name: Run SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
         with:
           args: >
             -Dsonar.organization=mt-org
             -Dsonar.projectKey=mt-org
-            -Dsonar.sources=frontend/src
+            -Dsonar.sources=frontend/src,backend/src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.spec.js
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
