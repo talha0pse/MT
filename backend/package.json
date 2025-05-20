@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --no-warnings src/server.js",
+    "test": "jest --coverage",
     "start": "node src/server.js",
     "lint": "echo 'No linting configured' && exit 0"
   },
