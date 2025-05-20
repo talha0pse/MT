@@ -9,7 +9,7 @@ on:
 
 jobs:
   sonarqube:
-    name: SonarCloud Scan
+    name: SonarCloud Scan with Coverage
     runs-on: ubuntu-latest
 
     steps:
@@ -21,21 +21,24 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install Frontend dependencies
+      - name: Install dependencies
         working-directory: ./frontend
         run: npm install
 
-      - name: Install Backend dependencies
-        working-directory: ./backend
-        run: npm install
+      - name: Run tests and collect coverage
+        working-directory: ./frontend
+        run: npm test -- --coverage
 
-      - name: Run SonarCloud Scan
+      - name: Upload coverage to SonarCloud
         uses: sonarsource/sonarcloud-github-action@v2
         with:
           args: >
             -Dsonar.organization=mt-org
             -Dsonar.projectKey=mt-org
-            -Dsonar.sources=frontend/src,backend/src
+            -Dsonar.sources=frontend/src
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.spec.js
+            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
+            -Dsonar.coverage.exclusions=**/*.test.js,**/__tests__/**,**/__mocks__/**
+            -Dsonar.qualitygate.wait=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
