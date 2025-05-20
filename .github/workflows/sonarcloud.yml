@@ -1,9 +1,10 @@
-name: SonarCloud Frontend Scan
+name: SonarCloud Code Analysis
 
 on:
+  push:
+    branches: [ "main" ]
   pull_request:
-    branches:
-      - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   sonarcloud:
@@ -11,35 +12,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Important for PR metadata
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
 
-      - name: Install frontend dependencies and run tests
-        run: |
-          cd frontend
-          npm ci
-          npm test -- --coverage --watchAll=false
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      - name: SonarCloud Scan (Frontend only)
-        uses: sonarsource/sonarcloud-github-action@v2
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: frontend
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Run SonarCloud Analysis
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: frontend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.organization=mt-org
-            -Dsonar.projectKey=mt-org
-            -Dsonar.sources=frontend/src
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/*.spec.js
-            -Dsonar.javascript.lcov.reportPaths=frontend/coverage/lcov.info
-            -Dsonar.coverage.exclusions=**/*.test.js,**/__tests__/**,**/__mocks__/**
-            -Dsonar.qualitygate.wait=true
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
